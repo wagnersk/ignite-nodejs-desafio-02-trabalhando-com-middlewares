@@ -9,24 +9,86 @@ app.use(cors());
 
 const users = [];
 
+
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+   const { username } = request.headers
+   const checkUser = users.find(user=>user.username===username)
+   
+   if(!checkUser){
+     return response.status(404)
+   }
+
+   request.user = checkUser
+
+   next()
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+
+  const {user} = request;
+
+  if(user.pro ===false && user.todos.length>=10){
+      return response.status(403)
+    }
+
+  next()
+
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const {username} = request.headers;
+  const {id} = request.params;
+  const findUser = users.find(user=>user.username===username)
+
+  if(username===!null){
+    return response.status(404)
+  }
+
+  if(!validate(id)){
+      return response.status(400).json({error:"id inválido"})
+  }
+
+  if(!findUser){
+    return response.status(404).json({error:"User not found"})
+    }
+
+
+   const findUserTodo = findUser.todos.find(find=>find.id ===id)
+
+   if(!findUserTodo){
+    return response.status(404).json({error:"Todo not found"})
+    }
+
+   request.user = findUser
+   request.todo = findUserTodo
+  next()
+
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params
+
+  const user = users.find(user=>user.id===id)
+
+  console.log(user)
+  
+  if(!user){
+    return response.status(404).json({error:"Não achei o usuário pelo ID"})
+  }
+
+  request.user = user
+
+
+  next()
+
 }
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
+
+  if(name===null || username===null){
+    return response.status(400).json({ error: 'Username or name Cant be null' });
+  }
 
   const usernameAlreadyExists = users.some((user) => user.username === username);
 
@@ -48,7 +110,8 @@ app.post('/users', (request, response) => {
 });
 
 app.get('/users/:id', findUserById, (request, response) => {
-  const { user } = request;
+  const { user } = request
+
 
   return response.json(user);
 });
